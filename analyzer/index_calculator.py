@@ -34,10 +34,19 @@ def is_trading_day(date_str: str) -> bool:
 
 
 def last_trading_day() -> str:
-    """返回最近一个交易日的日期"""
-    d = date.today()
-    while d.weekday() >= 5:
+    """返回最近一个「已收盘」的交易日
+
+    交易日 15:00 之前跑的（比如 GitHub 计划任务被推迟到凌晨），
+    当天数据还不完整，要用上一个已收盘的交易日。
+    """
+    now = datetime.now()
+    d = now.date()
+    while d.weekday() >= 5:          # 先退到最近的工作日
         d -= timedelta(days=1)
+    if d == now.date() and now.hour < 15:   # 今天还没收盘 → 再退一个工作日
+        d -= timedelta(days=1)
+        while d.weekday() >= 5:
+            d -= timedelta(days=1)
     return d.strftime("%Y-%m-%d")
 
 

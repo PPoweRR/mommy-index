@@ -93,7 +93,13 @@ def run_pipeline():
     sorted_dates = sorted(by_date.keys())
     
     # 为每个日期计算指数并存入历史
+    MIN_POSTS_PER_DAY = 30      # 少于这个数说明当天还没积累够（凌晨跑、半截数据），不写记录
     for date_str in sorted_dates:
+        total_posts = sum(len(v) for v in by_date[date_str].values())
+        if total_posts < MIN_POSTS_PER_DAY:
+            print(f"  [{date_str}] 只有 {total_posts} 条，跳过不记账（数据还没攒够）")
+            continue
+
         sector_indices = {}
         for sector, results in by_date[date_str].items():
             result = compute_sector_index(results)
@@ -104,7 +110,6 @@ def run_pipeline():
             f"{SECTOR_NAMES.get(s, s)}:{sector_indices[s]['index']}"
             for s in sorted(sector_indices.keys())[:3]
         )
-        total_posts = sum(len(v) for v in by_date[date_str].values())
         print(f"  [{date_str}] {len(sector_indices)}板块 {total_posts}条帖子 → {name_preview}...")
     
     # 计算基于全部帖子的综合指数（top_newbie_posts 跨日期聚合，保证每个板块5-8条）
